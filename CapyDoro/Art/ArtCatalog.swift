@@ -37,6 +37,23 @@ enum ArtCatalog {
         return icon
     }
 
+    /// Every bundled frame for a pose ("walk_01", "walk_02", … until one is missing).
+    /// Empty if the pose has no art yet.
+    static func frames(for pose: Pose) -> [NSImage] {
+        var frames: [NSImage] = []
+        while let frame = image(named: String(format: "%@_%02d", pose.rawValue, frames.count + 1)) {
+            frames.append(frame)
+        }
+        return frames
+    }
+
+    /// The focus animation: three walk cycles, then one hop, played as one loop.
+    /// (The hop plays at the walk's 8 fps, a touch slower than its own 10.)
+    static func focusLoopFrames() -> [NSImage] {
+        let walk = frames(for: .walk)
+        return walk + walk + walk + frames(for: .jump)
+    }
+
     /// Sprite frame names for a pose, in play order: "walk_2" comes before "walk_10".
     /// `@2x` files are skipped because macOS pairs them with their 1x file automatically.
     static func frameNames(for pose: Pose, in fileNames: [String]) -> [String] {

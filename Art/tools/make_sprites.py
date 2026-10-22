@@ -9,7 +9,8 @@ Builds the menu bar capybara animations from the hand-made art.
 
 Every frame shares one canvas with the feet on the same baseline, so nothing jitters.
 Output: Art/sprites/{walk,jump}/<pose>_NN.png (1x) and <pose>_NN@2x.png (2x),
-plus preview images in Art/sprites/preview/.
+preview images in Art/sprites/preview/, and the same frames as image sets in
+CapyDoro/Assets.xcassets/Sprites/ so the app can load them by name ("walk_01").
 
 Run from anywhere:  python3 Art/tools/make_sprites.py
 Needs Pillow (pip install pillow). Dev-only; nothing here ships in the app.
@@ -20,6 +21,7 @@ from PIL import Image, ImageChops, ImageFilter
 ART = Path(__file__).resolve().parent.parent
 SRC = ART / "sprites" / "Jump_Animation_Frames"
 OUT = ART / "sprites"
+ASSETS = ART.parent / "CapyDoro" / "Assets.xcassets" / "Sprites"
 
 # Canvas in points (the menu bar is ~22–24 pt tall). 2x pixels = points * 2.
 CANVAS_PT = (24, 20)
@@ -154,7 +156,33 @@ def save_all():
             folder.mkdir(exist_ok=True)
             for i, frame in enumerate(frames, 1):
                 frame.save(folder / f"{pose}_{i:02d}{suffix}.png")
+    save_asset_catalog()
     save_preview()
+
+
+def save_asset_catalog():
+    """Copies every frame into Assets.xcassets/Sprites/<name>.imageset (1x + 2x).
+    Colour images, not templates: the capybara keeps its colours in the menu bar."""
+    import json, shutil
+    if ASSETS.exists():
+        shutil.rmtree(ASSETS)          # start clean so removed frames don't linger
+    ASSETS.mkdir(parents=True)
+    info = {"author": "xcode", "version": 1}
+    (ASSETS / "Contents.json").write_text(json.dumps({"info": info}, indent=2) + "\n")
+    for pose in ("walk", "jump"):
+        for one_x in sorted((OUT / pose).glob(f"{pose}_[0-9][0-9].png")):
+            name = one_x.stem
+            folder = ASSETS / f"{name}.imageset"
+            folder.mkdir()
+            shutil.copy(one_x, folder / f"{name}.png")
+            shutil.copy(one_x.with_name(f"{name}@2x.png"), folder / f"{name}@2x.png")
+            (folder / "Contents.json").write_text(json.dumps({
+                "images": [
+                    {"filename": f"{name}.png", "idiom": "universal", "scale": "1x"},
+                    {"filename": f"{name}@2x.png", "idiom": "universal", "scale": "2x"},
+                ],
+                "info": info,
+            }, indent=2) + "\n")
 
 
 def save_preview():
