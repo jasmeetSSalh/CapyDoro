@@ -11,6 +11,8 @@ import SwiftUI
 struct MenuContent: View {
     let engine: PomodoroEngine
     let settings: SettingsStore
+    /// SwiftUI's action for showing the Settings window (macOS 14+).
+    @Environment(\.openSettings) private var openSettings
 
     var body: some View {
         // Disabled Buttons show as greyed-out text: status lines.
@@ -43,6 +45,14 @@ struct MenuContent: View {
         #endif
 
         Divider()
+
+        Button("Settings…") {
+            // A menu bar app isn't "in front", so bring it forward first or the
+            // window opens hidden behind other apps.
+            NSApp.activate()
+            openSettings()
+        }
+        .keyboardShortcut(",")
 
         // An agent app has no Dock icon and no app menu, so this is the only way to quit.
         Button("Quit CapyDoro") {

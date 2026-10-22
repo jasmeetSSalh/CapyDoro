@@ -13,6 +13,7 @@ struct CapyDoroApp: App {
     // @State keeps these objects alive for the app's whole life (created once, not per redraw).
     @State private var settings: SettingsStore
     @State private var engine: PomodoroEngine
+    private let launchAtLogin = LaunchAtLoginService()
 
     init() {
         let settings = SettingsStore()
@@ -34,5 +35,10 @@ struct CapyDoroApp: App {
             MenuBarLabel(engine: engine)
         }
         .menuBarExtraStyle(.menu)   // a plain native dropdown menu
+
+        // The standard macOS Settings window, opened from the dropdown.
+        Settings {
+            SettingsView(settings: settings, launchAtLogin: launchAtLogin)
+        }
     }
 }
