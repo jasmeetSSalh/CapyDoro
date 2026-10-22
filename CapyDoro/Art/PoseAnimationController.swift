@@ -52,7 +52,10 @@ final class PoseAnimationController {
              engine.isRunning,
              engine.phase)
         } onChange: { [weak self] in
-            Task { @MainActor in self?.watchEngine() }
+            // Unwrap once here; the task then holds a plain (non-`var`) reference, which
+            // Swift's concurrency checking accepts.
+            guard let self else { return }
+            Task { @MainActor in self.watchEngine() }
         }
         update(pose: newPose, running: running, phase: phase)
     }
