@@ -14,9 +14,15 @@ struct MenuBarLabel: View {
 
     var body: some View {
         HStack(spacing: 4) {
-            Image(systemName: engine.isPaused ? "pause.circle" : "timer")
+            Image(systemName: iconName)
             Text(TimeFormatter.string(fromSeconds: engine.displayRemaining))
                 .monospacedDigit()   // every digit gets the same width, so the item never jiggles
         }
+    }
+
+    /// SF Symbol for the current state (the capybara art replaces these later).
+    private var iconName: String {
+        if engine.isPaused { return "pause.circle" }
+        return engine.phase.isBreak ? "cup.and.saucer" : "timer"
     }
 }

@@ -5,8 +5,9 @@
 //  The timer's brain: which phase we're in, when it ends, and what comes next.
 //  No SwiftUI in here, so it can be tested on its own.
 //
-//  M2: countdown (start / pause / resume / reset). When a phase runs out it simply
-//  returns to idle; M3 replaces that with the full focus → break cycle.
+//  Cycle: focus → short break, and every Nth counted focus → long break (N =
+//  sessionsBeforeLongBreak). Finishing or skipping a long break resets the count.
+//  A skipped focus is not counted.
 //
 
 import Foundation
@@ -100,15 +101,30 @@ final class PomodoroEngine {
         ticker.stop()
     }
 
-    func skip() {}                // M3
+    /// Ends the current phase now, without counting a skipped focus.
+    func skip() {
+        guard phase != .idle else { return }
+        advance(countFocus: false)
+    }
+
     func restoreSavedState() {}   // M6
+
+    #if DEBUG
+    /// Testing aid (debug builds only): makes the running phase end in a few seconds.
+    func debugJumpToEnd(secondsLeft: Int = 5) {
+        guard isRunning else { return }
+        endDate = now().addingTimeInterval(TimeInterval(secondsLeft))
+    }
+    #endif
 
     /// Called every second while running (and on wake from sleep later).
     func tick() {
         guard isRunning, let endDate else { return }
         tickVersion += 1
+        // `>=` plus advancing only once means a tick long after the end (e.g. after the
+        // Mac slept for hours) moves exactly one phase forward, never several.
         if now() >= endDate {
-            finishPhase()
+            advance(countFocus: true)
         }
     }
 
@@ -124,8 +140,31 @@ final class PomodoroEngine {
         }
     }
 
-    /// M2 placeholder: back to idle. M3 moves on to the next phase instead.
-    private func finishPhase() {
-        reset()
+    /// Moves to the next phase. With autoStartNext off (the default), the next phase is
+    /// prepared with its full length and waits for Start.
+    private func advance(countFocus: Bool) {
+        ticker.stop()
+        endDate = nil
+        isRunning = false
+        isPaused = false
+
+        switch phase {
+        case .focus:
+            if countFocus { completedFocusCount += 1 }
+            let earnedLongBreak = countFocus
+                && completedFocusCount % settings.sessionsBeforeLongBreak == 0
+            phase = earnedLongBreak ? .longBreak : .shortBreak
+        case .longBreak:
+            completedFocusCount = 0
+            phase = .focus
+        case .shortBreak, .idle:
+            phase = .focus
+        }
+
+        // Read the length now, so a duration changed mid-phase applies from the next phase.
+        remainingSeconds = settings.duration(for: phase)
+        if settings.autoStartNext {
+            run()
+        }
     }
 }

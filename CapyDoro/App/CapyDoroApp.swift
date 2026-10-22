@@ -29,7 +29,7 @@ struct CapyDoroApp: App {
         // MenuBarExtra puts an item in the menu bar. The first closure is the dropdown,
         // `label:` is what sits in the bar itself.
         MenuBarExtra {
-            MenuContent(engine: engine)
+            MenuContent(engine: engine, settings: settings)
         } label: {
             MenuBarLabel(engine: engine)
         }
