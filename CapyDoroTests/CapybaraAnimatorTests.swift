@@ -2,8 +2,8 @@
 //  CapybaraAnimatorTests.swift
 //  CapyDoroTests
 //
-//  B3: the frame animator, the bundled walk/hop frames, and the controller that walks the
-//  capybara only while focus is running.
+//  B3/B4: the frame animator, the bundled sprite frames, and the controller that picks
+//  the pose for each timer state and animates only while the countdown runs.
 //
 
 import AppKit
@@ -68,9 +68,19 @@ struct SpriteFrameTests {
         #expect(ArtCatalog.focusLoopFrames().count == 8 * 3 + 9)
     }
 
-    @Test("A pose with no art has no frames (the static icon is used instead)")
-    func missingPose() {
-        #expect(ArtCatalog.frames(for: .spring).isEmpty)
+    @Test("Every menu bar pose has art: stand 1, sit 4, hot spring 4, sleep 1")
+    func restingPoses() {
+        #expect(ArtCatalog.frames(for: .stand).count == 1)
+        #expect(ArtCatalog.frames(for: .sit).count == 4)
+        #expect(ArtCatalog.frames(for: .spring).count == 4)
+        #expect(ArtCatalog.frames(for: .sleep).count == 1)
+    }
+
+    @Test("In the menu bar, walking plays the whole walk ×3 + hop loop")
+    func menuBarPoseFrames() {
+        let frames = ArtCatalog.menuBarPoseFrames()
+        #expect(frames[.walk]?.count == 8 * 3 + 9)
+        #expect(frames[.jump] == nil)
     }
 
     @Test("Sprites are full colour, not tinted like the static icon")
@@ -79,14 +89,16 @@ struct SpriteFrameTests {
     }
 }
 
-@Suite("Focus animation controller (B3)")
-struct FocusAnimationControllerTests {
-    let h = EngineHarness()
+@Suite("Pose animation controller (B3/B4)")
+struct PoseAnimationControllerTests {
+    let h = EngineHarness { $0.sessionsBeforeLongBreak = 2 }
     let animatorTicker = FakeTicker()
+    static let frameCounts: [Pose: Int] = [.stand: 1, .walk: 33, .sit: 4, .spring: 4, .sleep: 1]
 
-    func makeController(motionAllowed: Bool = true) -> (FocusAnimationController, CapybaraAnimator) {
+    func makeController(motionAllowed: Bool = true) -> (PoseAnimationController, CapybaraAnimator) {
         let animator = CapybaraAnimator(ticker: animatorTicker, isMotionAllowed: { motionAllowed })
-        let controller = FocusAnimationController(engine: h.engine, animator: animator, frameCount: 33)
+        let controller = PoseAnimationController(engine: h.engine, animator: animator,
+                                                 frameCounts: Self.frameCounts)
         return (controller, animator)
     }
 
@@ -95,69 +107,79 @@ struct FocusAnimationControllerTests {
         for _ in 0..<5 { await Task.yield() }
     }
 
-    @Test("Idle: no animation timer")
+    @Test("Idle: standing still, no animation timer")
     func idle() async {
         let (controller, _) = makeController()
         await settle()
+        #expect(controller.pose == .stand)
         #expect(!animatorTicker.isActive)
-        _ = controller
     }
 
-    @Test("Starting focus starts the walk at 8 fps")
+    @Test("Running focus: walking at 8 fps")
     func walksDuringFocus() async {
         let (controller, _) = makeController()
         h.engine.start()
         await settle()
+        #expect(controller.pose == .walk)
         #expect(animatorTicker.isActive)
         #expect(animatorTicker.interval == 1.0 / 8)
-        _ = controller
     }
 
-    @Test("Pausing stops the walk; resuming restarts it")
-    func pauseStops() async {
+    @Test("Paused: sleeping, still; resuming walks again")
+    func pauseSleeps() async {
         let (controller, _) = makeController()
         h.engine.start()
         await settle()
         h.engine.pause()
         await settle()
+        #expect(controller.pose == .sleep)
         #expect(!animatorTicker.isActive)
         h.engine.resume()
         await settle()
+        #expect(controller.pose == .walk)
         #expect(animatorTicker.isActive)
-        _ = controller
     }
 
-    @Test("A break stops the walk")
-    func breakStops() async {
+    @Test("Short break: sitting, still while waiting, breathing at 3 fps once started")
+    func shortBreakSits() async {
         let (controller, _) = makeController()
+        h.finishCurrentPhase()          // focus ends → short break waits for Start
+        await settle()
+        #expect(controller.pose == .sit)
+        #expect(!animatorTicker.isActive)
         h.engine.start()
         await settle()
-        h.engine.skip()
-        await settle()
-        #expect(!animatorTicker.isActive)
-        _ = controller
+        #expect(controller.pose == .sit)
+        #expect(animatorTicker.isActive)
+        #expect(animatorTicker.interval == 1.0 / 3)
     }
 
-    @Test("Reduce Motion / animations off: focus shows a still frame, no timer")
+    @Test("Long break: soaking in the hot spring at 3 fps")
+    func longBreakSprings() async {
+        let (controller, _) = makeController()
+        h.finishCurrentPhase(); h.finishCurrentPhase(); h.finishCurrentPhase()   // 2nd focus → long break
+        h.engine.start()
+        await settle()
+        #expect(controller.pose == .spring)
+        #expect(animatorTicker.isActive)
+    }
+
+    @Test("Focus waiting for Start (after a break): standing still")
+    func waitingFocusStands() async {
+        let (controller, _) = makeController()
+        h.finishCurrentPhase(); h.finishCurrentPhase()   // focus, then break → focus waits
+        await settle()
+        #expect(controller.pose == .stand)
+        #expect(!animatorTicker.isActive)
+    }
+
+    @Test("Reduce Motion / animations off: right pose, but a still frame and no timer")
     func noMotion() async {
         let (controller, animator) = makeController(motionAllowed: false)
         h.engine.start()
         await settle()
+        #expect(controller.pose == .walk)
         #expect(!animatorTicker.isActive)
         #expect(animator.frameIndex == 0)
-        _ = controller
-    }
-
-    @Test("The walk runs only while focus is running")
-    func isWalking() async {
-        let (controller, _) = makeController()
-        #expect(!controller.isWalking)
-        h.engine.start()
-        await settle()
-        #expect(controller.isWalking)
-        h.engine.pause()
-        await settle()
-        #expect(!controller.isWalking)
     }
 }
-

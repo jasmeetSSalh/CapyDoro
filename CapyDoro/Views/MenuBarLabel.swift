@@ -2,20 +2,20 @@
 //  MenuBarLabel.swift
 //  CapyDoro
 //
-//  What you see in the menu bar: an icon and the time left, e.g. "24:13".
-//  While focus runs, the icon is the walking/hopping capybara animation.
+//  What you see in the menu bar: the capybara in its current pose and the time left,
+//  e.g. "24:13".
 //
 
 import SwiftUI
 
 struct MenuBarLabel: View {
     // These are @Observable, so reading their properties here makes this view redraw
-    // automatically whenever they change (every tick, every animation frame).
+    // automatically whenever they change (every tick, every animation frame, every pose).
     let engine: PomodoroEngine
-    let focusAnimation: FocusAnimationController
+    let poseAnimation: PoseAnimationController
     let animator: CapybaraAnimator
-    /// The focus loop's frames, loaded once at launch.
-    let focusFrames: [NSImage]
+    /// Every pose's frames, loaded once at launch.
+    let poseFrames: [Pose: [NSImage]]
 
     /// Loaded once and shared (`static`), not reloaded on every tick.
     private static let capybara = ArtCatalog.menuBarIcon()
@@ -31,10 +31,10 @@ struct MenuBarLabel: View {
     /// `@ViewBuilder` lets one property return different kinds of views from an `if`.
     @ViewBuilder
     private var icon: some View {
-        if focusAnimation.isWalking, let frame = currentFrame {
+        if let frame = currentFrame {
             Image(nsImage: frame)
                 .renderingMode(.original)   // keep the capybara's colours, don't tint
-        } else if engine.isPaused {
+        } else if engine.isPaused {         // fallbacks if a pose's art is ever missing
             Image(systemName: "pause.circle")
         } else if engine.phase.isBreak {
             Image(systemName: "cup.and.saucer")
@@ -43,8 +43,11 @@ struct MenuBarLabel: View {
         }
     }
 
-    /// nil if the frames are missing, so the static icon shows instead of crashing.
+    /// The frame for the current pose, or nil if that pose has no art.
+    /// `%` keeps the index in range for the instant between a pose change and the
+    /// animator restarting at frame 0.
     private var currentFrame: NSImage? {
-        focusFrames.indices.contains(animator.frameIndex) ? focusFrames[animator.frameIndex] : nil
+        guard let frames = poseFrames[poseAnimation.pose], !frames.isEmpty else { return nil }
+        return frames[animator.frameIndex % frames.count]
     }
 }

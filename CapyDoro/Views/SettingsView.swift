@@ -35,7 +35,7 @@ struct SettingsView: View {
             Section("Behaviour") {
                 Toggle("Play chime when a phase ends", isOn: $settings.soundEnabled)
                 Toggle("Start the next phase automatically", isOn: $settings.autoStartNext)
-                Toggle("Animate the capybara during focus", isOn: $settings.animationsEnabled)
+                Toggle("Animate the capybara", isOn: $settings.animationsEnabled)
             }
 
             Section("System") {

@@ -54,6 +54,17 @@ enum ArtCatalog {
         return walk + walk + walk + frames(for: .jump)
     }
 
+    /// What the menu bar plays for each pose. Walking is the full walk ×3 + hop loop;
+    /// the hop has no pose of its own in the menu bar.
+    static func menuBarPoseFrames() -> [Pose: [NSImage]] {
+        var result: [Pose: [NSImage]] = [:]
+        for pose in Pose.allCases where pose != .jump {
+            result[pose] = frames(for: pose)
+        }
+        result[.walk] = focusLoopFrames()
+        return result
+    }
+
     /// Sprite frame names for a pose, in play order: "walk_2" comes before "walk_10".
     /// `@2x` files are skipped because macOS pairs them with their 1x file automatically.
     static func frameNames(for pose: Pose, in fileNames: [String]) -> [String] {

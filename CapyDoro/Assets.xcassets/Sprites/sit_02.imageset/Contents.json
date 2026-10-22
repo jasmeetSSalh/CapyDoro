@@ -1,0 +1,18 @@
+{
+  "images": [
+    {
+      "filename": "sit_02.png",
+      "idiom": "universal",
+      "scale": "1x"
+    },
+    {
+      "filename": "sit_02@2x.png",
+      "idiom": "universal",
+      "scale": "2x"
+    }
+  ],
+  "info": {
+    "author": "xcode",
+    "version": 1
+  }
+}

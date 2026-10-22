@@ -15,8 +15,8 @@ struct CapyDoroApp: App {
     @State private var settings: SettingsStore
     @State private var engine: PomodoroEngine
     @State private var animator: CapybaraAnimator
-    @State private var focusAnimation: FocusAnimationController
-    private let focusFrames: [NSImage]
+    @State private var poseAnimation: PoseAnimationController
+    private let poseFrames: [Pose: [NSImage]]
     private let launchAtLogin = LaunchAtLoginService()
     private let wakeObserver: WakeObserver
 
@@ -31,20 +31,20 @@ struct CapyDoroApp: App {
         engine.restoreSavedState()   // continue a session from before quitting
         wakeObserver = WakeObserver { engine.tick() }
 
-        // The walking capybara. Motion is checked each time a focus starts or resumes.
-        let focusFrames = ArtCatalog.focusLoopFrames()
+        // The capybara poses. Motion is checked each time an animated pose starts.
+        let poseFrames = ArtCatalog.menuBarPoseFrames()
         let animator = CapybaraAnimator(ticker: RepeatingTicker()) {
             settings.animationsEnabled && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
         }
-        // Created after restoring, so a session that's still running starts walking right away.
-        let focusAnimation = FocusAnimationController(engine: engine, animator: animator,
-                                                      frameCount: focusFrames.count)
+        // Created after restoring, so a restored session shows the right pose right away.
+        let poseAnimation = PoseAnimationController(engine: engine, animator: animator,
+                                                    frameCounts: poseFrames.mapValues(\.count))
 
-        self.focusFrames = focusFrames
+        self.poseFrames = poseFrames
         _settings = State(initialValue: settings)
         _engine = State(initialValue: engine)
         _animator = State(initialValue: animator)
-        _focusAnimation = State(initialValue: focusAnimation)
+        _poseAnimation = State(initialValue: poseAnimation)
     }
 
     var body: some Scene {
@@ -53,8 +53,8 @@ struct CapyDoroApp: App {
         MenuBarExtra {
             MenuContent(engine: engine, settings: settings)
         } label: {
-            MenuBarLabel(engine: engine, focusAnimation: focusAnimation,
-                         animator: animator, focusFrames: focusFrames)
+            MenuBarLabel(engine: engine, poseAnimation: poseAnimation,
+                         animator: animator, poseFrames: poseFrames)
         }
         .menuBarExtraStyle(.menu)   // a plain native dropdown menu
 
