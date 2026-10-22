@@ -2,8 +2,8 @@
 //  MenuBarLabel.swift
 //  CapyDoro
 //
-//  What you see in the menu bar: the capybara in its current pose and the time left,
-//  e.g. "24:13".
+//  What you see in the menu bar: the capybara in its current pose (or a transition between
+//  poses) and the time left, e.g. "24:13".
 //
 
 import SwiftUI
@@ -14,8 +14,9 @@ struct MenuBarLabel: View {
     let engine: PomodoroEngine
     let poseAnimation: PoseAnimationController
     let animator: CapybaraAnimator
-    /// Every pose's frames, loaded once at launch.
+    /// Every pose's and transition's frames, loaded once at launch.
     let poseFrames: [Pose: [NSImage]]
+    let transitionFrames: [Transition: [NSImage]]
 
     /// Loaded once and shared (`static`), not reloaded on every tick.
     private static let capybara = ArtCatalog.menuBarIcon()
@@ -43,11 +44,17 @@ struct MenuBarLabel: View {
         }
     }
 
-    /// The frame for the current pose, or nil if that pose has no art.
-    /// `%` keeps the index in range for the instant between a pose change and the
-    /// animator restarting at frame 0.
+    /// The frame to show: the playing transition's, else the current pose's; nil if that
+    /// art is missing. `%` keeps the index in range for the instant between a change and
+    /// the animator restarting at frame 0.
     private var currentFrame: NSImage? {
-        guard let frames = poseFrames[poseAnimation.pose], !frames.isEmpty else { return nil }
+        let frames: [NSImage]?
+        if let transition = poseAnimation.transition {
+            frames = transitionFrames[transition]
+        } else {
+            frames = poseFrames[poseAnimation.pose]
+        }
+        guard let frames, !frames.isEmpty else { return nil }
         return frames[animator.frameIndex % frames.count]
     }
 }

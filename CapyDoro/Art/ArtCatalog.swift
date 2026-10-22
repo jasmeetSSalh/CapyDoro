@@ -40,8 +40,22 @@ enum ArtCatalog {
     /// Every bundled frame for a pose ("walk_01", "walk_02", … until one is missing).
     /// Empty if the pose has no art yet.
     static func frames(for pose: Pose) -> [NSImage] {
+        frames(named: pose.rawValue)
+    }
+
+    /// Every bundled frame of a transition ("flop_01" …).
+    static func frames(for transition: Transition) -> [NSImage] {
+        frames(named: transition.rawValue)
+    }
+
+    /// All transitions' frames, loaded once at launch.
+    static func transitionFrames() -> [Transition: [NSImage]] {
+        Dictionary(uniqueKeysWithValues: Transition.allCases.map { ($0, frames(for: $0)) })
+    }
+
+    private static func frames(named prefix: String) -> [NSImage] {
         var frames: [NSImage] = []
-        while let frame = image(named: String(format: "%@_%02d", pose.rawValue, frames.count + 1)) {
+        while let frame = image(named: String(format: "%@_%02d", prefix, frames.count + 1)) {
             frames.append(frame)
         }
         return frames

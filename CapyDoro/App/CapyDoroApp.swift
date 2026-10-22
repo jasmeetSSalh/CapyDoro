@@ -17,6 +17,7 @@ struct CapyDoroApp: App {
     @State private var animator: CapybaraAnimator
     @State private var poseAnimation: PoseAnimationController
     private let poseFrames: [Pose: [NSImage]]
+    private let transitionFrames: [Transition: [NSImage]]
     private let launchAtLogin = LaunchAtLoginService()
     private let wakeObserver: WakeObserver
 
@@ -31,16 +32,22 @@ struct CapyDoroApp: App {
         engine.restoreSavedState()   // continue a session from before quitting
         wakeObserver = WakeObserver { engine.tick() }
 
-        // The capybara poses. Motion is checked each time an animated pose starts.
+        // The capybara poses and the transitions between them. Motion is checked each time
+        // an animation starts.
         let poseFrames = ArtCatalog.menuBarPoseFrames()
+        let transitionFrames = ArtCatalog.transitionFrames()
         let animator = CapybaraAnimator(ticker: RepeatingTicker()) {
             settings.animationsEnabled && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
         }
         // Created after restoring, so a restored session shows the right pose right away.
-        let poseAnimation = PoseAnimationController(engine: engine, animator: animator,
-                                                    frameCounts: poseFrames.mapValues(\.count))
+        let poseAnimation = PoseAnimationController(
+            engine: engine, animator: animator,
+            frameCounts: poseFrames.mapValues(\.count),
+            transitionFrameCounts: transitionFrames.mapValues(\.count)
+        )
 
         self.poseFrames = poseFrames
+        self.transitionFrames = transitionFrames
         _settings = State(initialValue: settings)
         _engine = State(initialValue: engine)
         _animator = State(initialValue: animator)
@@ -54,7 +61,8 @@ struct CapyDoroApp: App {
             MenuContent(engine: engine, settings: settings)
         } label: {
             MenuBarLabel(engine: engine, poseAnimation: poseAnimation,
-                         animator: animator, poseFrames: poseFrames)
+                         animator: animator, poseFrames: poseFrames,
+                         transitionFrames: transitionFrames)
         }
         .menuBarExtraStyle(.menu)   // a plain native dropdown menu
 
