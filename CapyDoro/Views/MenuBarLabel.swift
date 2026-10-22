@@ -2,18 +2,20 @@
 //  MenuBarLabel.swift
 //  CapyDoro
 //
-//  What you see in the menu bar: an icon and the time left, e.g. "25:00".
+//  What you see in the menu bar: an icon and the time left, e.g. "24:13".
 //
 
 import SwiftUI
 
 struct MenuBarLabel: View {
-    let remainingSeconds: Int
+    // The engine is @Observable, so reading its properties here makes this view
+    // redraw automatically whenever they change (every tick while running).
+    let engine: PomodoroEngine
 
     var body: some View {
         HStack(spacing: 4) {
-            Image(systemName: "timer")
-            Text(TimeFormatter.string(fromSeconds: remainingSeconds))
+            Image(systemName: engine.isPaused ? "pause.circle" : "timer")
+            Text(TimeFormatter.string(fromSeconds: engine.displayRemaining))
                 .monospacedDigit()   // every digit gets the same width, so the item never jiggles
         }
     }

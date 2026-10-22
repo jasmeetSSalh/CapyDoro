@@ -6,11 +6,6 @@
 	objectVersion = 110;
 	objects = {
 
-/* Begin PBXFileReference section */
-		2643DE983089348100C37526 /* CapyDoro.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CapyDoro.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		2643DEB03089348100C37526 /* CapyDoroTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CapyDoroTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-/* End PBXFileReference section */
-
 /* Begin PBXContainerItemProxy section */
 		2643DEB13089348100C37526 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -20,6 +15,11 @@
 			remoteInfo = CapyDoro;
 		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		2643DE983089348100C37526 /* CapyDoro.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CapyDoro.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		2643DEB03089348100C37526 /* CapyDoroTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CapyDoroTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		2643DE9A3089348100C37526 /* CapyDoro */ = {
@@ -35,12 +35,12 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		2643DEB33089348100C37526 /* Frameworks */ = {
+		2643DE953089348100C37526 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
 			);
 		};
-		2643DE953089348100C37526 /* Frameworks */ = {
+		2643DEB33089348100C37526 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
 			);
@@ -148,12 +148,12 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		2643DEB43089348100C37526 /* Resources */ = {
+		2643DE963089348100C37526 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
 			);
 		};
-		2643DE963089348100C37526 /* Resources */ = {
+		2643DEB43089348100C37526 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
 			);
@@ -161,12 +161,12 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		2643DEB53089348100C37526 /* Sources */ = {
+		2643DE943089348100C37526 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			files = (
 			);
 		};
-		2643DE943089348100C37526 /* Sources */ = {
+		2643DEB53089348100C37526 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			files = (
 			);
@@ -182,46 +182,6 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		2643DEB73089348100C37526 /* Debug configuration for PBXNativeTarget "CapyDoroTests" */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = JasmeetSalh.CapyDoroTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CapyDoro.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/CapyDoro";
-			};
-			name = Debug;
-		};
-		2643DEB83089348100C37526 /* Release configuration for PBXNativeTarget "CapyDoroTests" */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = JasmeetSalh.CapyDoroTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CapyDoro.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/CapyDoro";
-			};
-			name = Release;
-		};
 		2643DEA13089348300C37526 /* Debug configuration for PBXProject "CapyDoro" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -402,17 +362,49 @@
 			};
 			name = Release;
 		};
+		2643DEB73089348100C37526 /* Debug configuration for PBXNativeTarget "CapyDoroTests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = JasmeetSalh.CapyDoroTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CapyDoro.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/CapyDoro";
+			};
+			name = Debug;
+		};
+		2643DEB83089348100C37526 /* Release configuration for PBXNativeTarget "CapyDoroTests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = JasmeetSalh.CapyDoroTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CapyDoro.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/CapyDoro";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		2643DEB93089348100C37526 /* Build configuration list for PBXNativeTarget "CapyDoroTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				2643DEB73089348100C37526 /* Debug configuration for PBXNativeTarget "CapyDoroTests" */,
-				2643DEB83089348100C37526 /* Release configuration for PBXNativeTarget "CapyDoroTests" */,
-			);
-			defaultConfigurationName = Release;
-		};
 		2643DE933089348100C37526 /* Build configuration list for PBXProject "CapyDoro" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -426,6 +418,14 @@
 			buildConfigurations = (
 				2643DEA43089348300C37526 /* Debug configuration for PBXNativeTarget "CapyDoro" */,
 				2643DEA53089348300C37526 /* Release configuration for PBXNativeTarget "CapyDoro" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		2643DEB93089348100C37526 /* Build configuration list for PBXNativeTarget "CapyDoroTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2643DEB73089348100C37526 /* Debug configuration for PBXNativeTarget "CapyDoroTests" */,
+				2643DEB83089348100C37526 /* Release configuration for PBXNativeTarget "CapyDoroTests" */,
 			);
 			defaultConfigurationName = Release;
 		};
