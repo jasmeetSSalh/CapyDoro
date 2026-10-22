@@ -11,7 +11,7 @@ Art/
 ├── sprites/
 │   ├── walk/   walk_01.png … walk_08.png    focus running   (8 frames ideal)
 │   ├── stand/  stand_01.png …               idle / waiting  (1+ frames)
-│   ├── sit/    sit_01.png …                 short break     (1+ frames)
+│   ├── nap/    nap_01.png …                 short break     (1+ frames)
 │   ├── spring/ spring_01.png …              long break      (1+ frames)
 │   └── sleep/  sleep_01.png …               paused          (1+ frames)
 └── sound/      chime.wav  (optional)

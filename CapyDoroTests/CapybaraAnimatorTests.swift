@@ -68,11 +68,11 @@ struct SpriteFrameTests {
         #expect(ArtCatalog.focusLoopFrames().count == 8 * 3 + 9)
     }
 
-    @Test("Every menu bar pose has art: stand 1, sit 4, hot spring 4, sleep 1")
+    @Test("Every menu bar pose has art: stand 1, nap 4, hot spring 16, sleep 1")
     func restingPoses() {
         #expect(ArtCatalog.frames(for: .stand).count == 1)
-        #expect(ArtCatalog.frames(for: .sit).count == 4)
-        #expect(ArtCatalog.frames(for: .spring).count == 4)
+        #expect(ArtCatalog.frames(for: .nap).count == 4)
+        #expect(ArtCatalog.frames(for: .spring).count == 16)
         #expect(ArtCatalog.frames(for: .sleep).count == 1)
     }
 
@@ -93,7 +93,7 @@ struct SpriteFrameTests {
 struct PoseAnimationControllerTests {
     let h = EngineHarness { $0.sessionsBeforeLongBreak = 2 }
     let animatorTicker = FakeTicker()
-    static let frameCounts: [Pose: Int] = [.stand: 1, .walk: 33, .sit: 4, .spring: 4, .sleep: 1]
+    static let frameCounts: [Pose: Int] = [.stand: 1, .walk: 33, .nap: 4, .spring: 16, .sleep: 1]
 
     func makeController(motionAllowed: Bool = true) -> (PoseAnimationController, CapybaraAnimator) {
         let animator = CapybaraAnimator(ticker: animatorTicker, isMotionAllowed: { motionAllowed })
@@ -140,21 +140,21 @@ struct PoseAnimationControllerTests {
         #expect(animatorTicker.isActive)
     }
 
-    @Test("Short break: sitting, still while waiting, breathing at 3 fps once started")
+    @Test("Short break: napping, still while waiting, z's floating at 3 fps once started")
     func shortBreakSits() async {
         let (controller, _) = makeController()
         h.finishCurrentPhase()          // focus ends → short break waits for Start
         await settle()
-        #expect(controller.pose == .sit)
+        #expect(controller.pose == .nap)
         #expect(!animatorTicker.isActive)
         h.engine.start()
         await settle()
-        #expect(controller.pose == .sit)
+        #expect(controller.pose == .nap)
         #expect(animatorTicker.isActive)
         #expect(animatorTicker.interval == 1.0 / 3)
     }
 
-    @Test("Long break: soaking in the hot spring at 3 fps")
+    @Test("Long break: floating in the hot spring at 4 fps")
     func longBreakSprings() async {
         let (controller, _) = makeController()
         h.finishCurrentPhase(); h.finishCurrentPhase(); h.finishCurrentPhase()   // 2nd focus → long break
@@ -162,6 +162,7 @@ struct PoseAnimationControllerTests {
         await settle()
         #expect(controller.pose == .spring)
         #expect(animatorTicker.isActive)
+        #expect(animatorTicker.interval == 1.0 / 4)
     }
 
     @Test("Focus waiting for Start (after a break): standing still")

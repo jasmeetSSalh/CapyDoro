@@ -18,8 +18,8 @@ struct PoseTests {
         #expect(Pose.for(phase: .idle, isRunning: false, isPaused: false) == .stand)
         #expect(Pose.for(phase: .focus, isRunning: true, isPaused: false) == .walk)
         #expect(Pose.for(phase: .focus, isRunning: false, isPaused: false) == .stand)   // waiting for Start
-        #expect(Pose.for(phase: .shortBreak, isRunning: true, isPaused: false) == .sit)
-        #expect(Pose.for(phase: .shortBreak, isRunning: false, isPaused: false) == .sit)
+        #expect(Pose.for(phase: .shortBreak, isRunning: true, isPaused: false) == .nap)
+        #expect(Pose.for(phase: .shortBreak, isRunning: false, isPaused: false) == .nap)
         #expect(Pose.for(phase: .longBreak, isRunning: true, isPaused: false) == .spring)
     }
 
@@ -32,14 +32,14 @@ struct PoseTests {
     func frameRates() {
         #expect(Pose.walk.framesPerSecond == 8)
         #expect(Pose.jump.framesPerSecond == 10)
-        for pose in [Pose.stand, .sit, .spring, .sleep] {
+        for pose in [Pose.stand, .nap, .spring, .sleep] {
             #expect((3...4).contains(pose.framesPerSecond))
         }
     }
 
     @Test("Folder names match the Art/sprites layout")
     func folderNames() {
-        #expect(Pose.allCases.map(\.rawValue).sorted() == ["jump", "sit", "sleep", "spring", "stand", "walk"])
+        #expect(Pose.allCases.map(\.rawValue).sorted() == ["jump", "nap", "sleep", "spring", "stand", "walk"])
     }
 }
 
@@ -48,7 +48,7 @@ struct ArtCatalogTests {
 
     @Test("Frames are picked by pose prefix and sorted by number, not alphabetically")
     func frameOrdering() {
-        let files = ["walk_10.png", "walk_2.png", "walk_1.png", "sit_01.png", ".DS_Store", "walk_03@2x.png", "walk_03.png"]
+        let files = ["walk_10.png", "walk_2.png", "walk_1.png", "nap_01.png", ".DS_Store", "walk_03@2x.png", "walk_03.png"]
         #expect(ArtCatalog.frameNames(for: .walk, in: files) == ["walk_1", "walk_2", "walk_03", "walk_10"])
     }
 

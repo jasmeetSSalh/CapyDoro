@@ -7,9 +7,9 @@ Builds the menu bar capybara animations from the hand-made art.
   jump  (9 frames, play at 10 fps) – crouch, the 5 drawn jump frames on an arc,
          squash on landing, settle.
   stand  (1 frame)  – frame 1 as drawn (idle, or a phase waiting for Start).
-  sit    (4 frames, 3 fps) – frame 5 (the tucked-in pose), gently breathing.
-  spring (4 frames, 3 fps) – frame 1, eyes closed, half in a hot-spring pool with
-         rippling water and rising steam (water and steam are drawn here).
+  nap    (4 frames, 3 fps) – short break: frame 1 lying low, with z's floating up.
+  spring (16 frames, 4 fps, 44 pt wide) – long break: frame 1 floating across a wide
+         hot-spring pool and back, with ripples and rising steam (water and steam drawn here).
   sleep  (1 frame)  – frame 1 lying low (squashed), with "z z" drawn above its head.
 
 Every frame shares one canvas with the feet on the same baseline, so nothing jitters.
@@ -21,7 +21,9 @@ Run from anywhere:  python3 Art/tools/make_sprites.py
 Needs Pillow (pip install pillow). Dev-only; nothing here ships in the app.
 """
 from pathlib import Path
-from PIL import Image, ImageChops, ImageDraw, ImageFilter
+import shutil
+
+from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageOps
 
 ART = Path(__file__).resolve().parent.parent
 SRC = ART / "sprites" / "Jump_Animation_Frames"
@@ -126,84 +128,106 @@ def jump_frames():
     ]
 
 
-def breathe(img: Image.Image, amount: float) -> Image.Image:
-    """Breathing in: a touch taller and narrower."""
-    return squash(img, 1 - amount / 2, 1 + amount)
-
-
 def stand_frames():
     return [(load(1), 0)]
-
-
-def sit_frames():
-    f5 = load(5)
-    inhale = breathe(f5, 0.035)
-    return [(f5, 0), (f5, 0), (inhale, 0), (inhale, 0)]   # 2 beats out, 2 beats in
 
 
 def sleep_frames():
     return [(squash(load(1), 1.1, 0.8), 0)]               # lying low, eyes already closed
 
 
+def draw_z(draw: ImageDraw.ImageDraw, x: float, y: float, size: float, scale: int):
+    """One 'z' (positions in points) in a soft blue that reads on light and dark menu bars."""
+    x, y, size = x * scale, y * scale, size * scale
+    z = [(x, y), (x + size, y), (x, y + size), (x + size, y + size)]
+    draw.line(z, fill=(92, 118, 196, 255), width=max(1, round(scale * 0.8)))
+
+
 def draw_zzz(canvas: Image.Image, scale: int) -> Image.Image:
-    """Two small 'z' letters above the head (top right), white with a brown outline so
-    they show on light and dark menu bars."""
+    """Paused: two still z's above the head (top right)."""
     draw = ImageDraw.Draw(canvas)
-    for x, y, size in [(16.0, 4.2, 2.4), (19.6, 1.2, 3.0)]:   # points; second z higher and bigger
-        x, y, size = x * scale, y * scale, size * scale
-        z = [(x, y), (x + size, y), (x, y + size), (x + size, y + size)]
-        draw.line(z, fill=(90, 58, 42, 255), width=max(1, round(scale * 1.0)) + 1)
-        draw.line(z, fill=(255, 255, 255, 255), width=max(1, round(scale * 0.5)))
+    for x, y, size in [(16.0, 4.2, 2.4), (19.6, 1.2, 3.0)]:   # second z higher and bigger
+        draw_z(draw, x, y, size, scale)
     return canvas
 
 
-def spring_frame(scale: int, step: int, factor: float) -> Image.Image:
-    """One hot-spring frame. `step` (0–3) moves the ripples and steam."""
-    import math
-    size = (CANVAS_PT[0] * scale, CANVAS_PT[1] * scale)
-    canvas = Image.new("RGBA", size, (0, 0, 0, 0))
-
-    # Steam: two wavy wisps beside the capybara, drifting upwards frame by frame.
+def draw_rising_zzz(canvas: Image.Image, scale: int, step: int) -> Image.Image:
+    """Short-break nap: z's that float up from the head and grow, two at a time, so the
+    4-frame loop looks like a steady stream."""
     draw = ImageDraw.Draw(canvas)
-    for x0, offset in [(2.6, 0.0), (21.4, 1.5)]:
-        rise = ((step + offset) % 4) * 0.5
+    for t in (step / 4, ((step + 2) % 4) / 4):          # 0 = just left the head, 1 = top
+        draw_z(draw, 15.5 + 5 * t, 6.5 - 6 * t, 1.8 + 1.4 * t, scale)
+    return canvas
+
+
+SPRING_CANVAS_PT = (44, 20)   # wider than the other poses: a pool to drift around in
+SPRING_FRAMES = 16            # one full there-and-back drift (4 s at 4 fps)
+
+
+def spring_frame(scale: int, step: int, factor: float) -> Image.Image:
+    """One hot-spring frame: the capybara floats across a wide pool and back, turning to face
+    the way it drifts, bobbing a little, with ripples and steam around it."""
+    import math
+    width, height = SPRING_CANVAS_PT
+    size = (width * scale, height * scale)
+    canvas = Image.new("RGBA", size, (0, 0, 0, 0))
+    t = step / SPRING_FRAMES                              # 0 → 1 over the loop
+    surface = 12.5                                        # water line, in points from the top
+
+    # Steam: three wisps rising off the water (drawn first, so they sit behind the capybara).
+    draw = ImageDraw.Draw(canvas)
+    for x0, offset in [(5.0, 0.0), (22.0, 0.35), (39.0, 0.7)]:
+        rise = ((t * 2 + offset) % 1) * 2.0
         pts = []
         for k in range(9):
-            t = k / 8
-            y = (12.5 - t * 7.5 - rise) * scale
-            x = (x0 + 0.7 * math.sin(t * 2 * math.pi + step)) * scale
+            u = k / 8
+            y = (surface - 0.5 - u * 6.5 - rise) * scale
+            x = (x0 + 0.7 * math.sin(u * 2 * math.pi + t * 4 * math.pi)) * scale
             pts.append((x, y))
-        draw.line(pts, fill=(176, 196, 212, 230), width=max(1, round(scale * 0.7)), joint="curve")
+        draw.line(pts, fill=(176, 196, 212, 220), width=max(1, round(scale * 0.7)), joint="curve")
 
-    # The capybara, a little smaller than standing, sunk so the pool covers its lower half.
+    # The capybara: smaller than standing, drifting ±13 pt from the middle and back.
     capy = load(1)
     capy = capy.crop(capy.getchannel("A").getbbox())
-    f = factor * 0.9
+    if math.cos(2 * math.pi * t) < 0:                     # drifting left → face left
+        capy = ImageOps.mirror(capy)
+    f = factor * 0.8
     small = capy.resize((round(capy.width * f), round(capy.height * f)), Image.LANCZOS)
     small = small.filter(ImageFilter.UnsharpMask(radius=0.6, percent=60, threshold=1))
-    top = round(3.0 * scale + (step in (2, 3)) * 0.25 * scale)   # bobs very slightly
-    tall = Image.new("RGBA", (size[0], max(size[1], top + small.height)), (0, 0, 0, 0))
-    tall.alpha_composite(small, ((size[0] - small.width) // 2, top))
+    center_x = width / 2 + 13 * math.sin(2 * math.pi * t)
+    top = 3.6 + 0.35 * math.sin(4 * math.pi * t)          # gentle bob; back stays above water
+    x_px = round(center_x * scale - small.width / 2)
+    tall = Image.new("RGBA", (size[0], max(size[1], round(top * scale) + small.height)), (0, 0, 0, 0))
+    tall.alpha_composite(small, (x_px, round(top * scale)))
     canvas.alpha_composite(tall.crop((0, 0, size[0], size[1])))
 
-    # Water: a round tub, i.e. a rippling surface at y = 12 pt and a bowl-shaped bottom
-    # (the lower half of an ellipse), slightly see-through.
+    # Water: the full width, a rippling surface and softly rounded bottom corners,
+    # slightly see-through so the submerged body shows faintly.
     water = Image.new("RGBA", size, (0, 0, 0, 0))
     wdraw = ImageDraw.Draw(water)
-    left, right, surface, bottom = 1.0, 23.0, 12.0, 19.6       # points
-    cx, rx, ry = (left + right) / 2, (right - left) / 2, bottom - surface
     edge = []
-    for k in range(0, 49):
-        x_pt = left + (right - left) * k / 48
-        edge.append((x_pt * scale, (surface + 0.4 * math.sin(x_pt / 2.2 + step * math.pi / 2)) * scale))
-    bowl = []
-    for k in range(0, 49):                        # right rim → bottom → left rim
-        a = math.pi * k / 48
-        bowl.append(((cx + rx * math.cos(a)) * scale, (surface + ry * math.sin(a)) * scale))
-    wdraw.polygon(edge + bowl, fill=(122, 194, 234, 215))
-    line = max(1, round(scale * 0.7))
-    wdraw.line(bowl, fill=(58, 138, 198, 255), width=line)
-    wdraw.line(edge, fill=(58, 138, 198, 255), width=line)
+    for k in range(0, 89):
+        x_pt = width * k / 88
+        y_pt = surface + 0.4 * math.sin(x_pt / 2.2 + t * 4 * math.pi)
+        edge.append((x_pt * scale, y_pt * scale))
+    radius = 3.0
+    corners = []
+    for k in range(0, 9):                                 # bottom-right corner, then bottom-left
+        a = math.pi / 2 * k / 8
+        corners.append(((width - radius + radius * math.cos(a)) * scale,
+                         (height - radius + radius * math.sin(a)) * scale))
+    for k in range(0, 9):
+        a = math.pi / 2 + math.pi / 2 * k / 8
+        corners.append(((radius + radius * math.cos(a)) * scale,
+                         (height - radius + radius * math.sin(a)) * scale))
+    wdraw.polygon(edge + corners, fill=(122, 194, 234, 255))
+    # Fade the water out towards the bottom so it reads as a pool, not a solid block.
+    fade = Image.new("L", size, 0)
+    for y in range(size[1]):
+        depth = max(0.0, (y / scale - surface) / (height - surface))   # 0 at surface → 1 at bottom
+        fade.paste(round(210 - 150 * depth), (0, y, size[0], y + 1))
+    water.putalpha(ImageChops.multiply(water.getchannel("A"), fade))
+    ImageDraw.Draw(water).line(edge, fill=(58, 138, 198, 255), width=max(1, round(scale * 0.7)))
     canvas.alpha_composite(water)
     return canvas
 
@@ -234,9 +258,10 @@ def render(scale: int):
         "walk": place(walk_frames(), factor, size, baseline),
         "jump": place(jump_frames(), factor, size, baseline),
         "stand": place(stand_frames(), factor, size, baseline),
-        "sit": place(sit_frames(), factor, size, baseline),
+        "nap": [draw_rising_zzz(place(sleep_frames(), factor, size, baseline)[0], scale, step)
+                for step in range(4)],
         "sleep": [draw_zzz(f, scale) for f in place(sleep_frames(), factor, size, baseline)],
-        "spring": [spring_frame(scale, step, factor) for step in range(4)],
+        "spring": [spring_frame(scale, step, factor) for step in range(SPRING_FRAMES)],
     }
 
 
@@ -244,6 +269,8 @@ def save_all():
     for scale, suffix in [(1, ""), (2, "@2x")]:
         for pose, frames in render(scale).items():
             folder = OUT / pose
+            if scale == 1 and folder.exists():
+                shutil.rmtree(folder)       # start clean so removed frames don't linger
             folder.mkdir(exist_ok=True)
             for i, frame in enumerate(frames, 1):
                 frame.save(folder / f"{pose}_{i:02d}{suffix}.png")
@@ -260,7 +287,7 @@ def save_asset_catalog():
     ASSETS.mkdir(parents=True)
     info = {"author": "xcode", "version": 1}
     (ASSETS / "Contents.json").write_text(json.dumps({"info": info}, indent=2) + "\n")
-    for pose in ("walk", "jump", "stand", "sit", "spring", "sleep"):
+    for pose in ("walk", "jump", "stand", "nap", "spring", "sleep"):
         for one_x in sorted((OUT / pose).glob(f"{pose}_[0-9][0-9].png")):
             name = one_x.stem
             folder = ASSETS / f"{name}.imageset"
