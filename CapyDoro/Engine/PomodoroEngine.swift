@@ -9,7 +9,8 @@
 //  sessionsBeforeLongBreak). Finishing or skipping a long break resets the count.
 //  A skipped focus is not counted.
 //
-//  Every change is saved, so quitting or crashing mid-session loses nothing.
+//  Every change is saved, so quitting, a crash or restarting the Mac loses nothing.
+//  Reset clears the saved session. (Full rules: plan.md, section 4 "Restore on launch".)
 //
 
 import Foundation
@@ -119,6 +120,7 @@ final class PomodoroEngine {
     /// - ended while the app was closed → moves on one phase and waits for Start
     ///   (no chime: macOS already showed the alert at the right time)
     /// - paused or waiting → restored as it was
+    /// The completed-focus count is restored in every case.
     func restoreSavedState() {
         let saved = settings.savedTimer
         phase = saved.phase
