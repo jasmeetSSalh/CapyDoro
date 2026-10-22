@@ -73,6 +73,7 @@ final class PomodoroEngine {
             phase = .focus
             remainingSeconds = settings.duration(for: .focus)
         }
+        notifications.requestAuthorizationIfNeeded()
         run()
     }
 
@@ -83,6 +84,7 @@ final class PomodoroEngine {
         isRunning = false
         isPaused = true
         ticker.stop()
+        notifications.cancelPending()   // no "ghost" alert for a paused session
     }
 
     func resume() {
@@ -99,6 +101,7 @@ final class PomodoroEngine {
         remainingSeconds = 0
         completedFocusCount = 0
         ticker.stop()
+        notifications.cancelPending()
     }
 
     /// Ends the current phase now, without counting a skipped focus.
@@ -114,6 +117,7 @@ final class PomodoroEngine {
     func debugJumpToEnd(secondsLeft: Int = 5) {
         guard isRunning else { return }
         endDate = now().addingTimeInterval(TimeInterval(secondsLeft))
+        notifications.scheduleEndOfPhase(phase, at: now().addingTimeInterval(TimeInterval(secondsLeft)))
     }
     #endif
 
@@ -124,6 +128,7 @@ final class PomodoroEngine {
         // `>=` plus advancing only once means a tick long after the end (e.g. after the
         // Mac slept for hours) moves exactly one phase forward, never several.
         if now() >= endDate {
+            if settings.soundEnabled { sound.playChime() }
             advance(countFocus: true)
         }
     }
@@ -132,8 +137,12 @@ final class PomodoroEngine {
 
     /// Starts counting down `remainingSeconds` from now.
     private func run() {
-        endDate = now().addingTimeInterval(TimeInterval(remainingSeconds))
+        let end = now().addingTimeInterval(TimeInterval(remainingSeconds))
+        endDate = end
         isRunning = true
+        // Scheduled with macOS up front, so the alert appears on time even if this app
+        // is slowed down in the background.
+        notifications.scheduleEndOfPhase(phase, at: end)
         // `[weak self]` stops the timer from keeping the engine alive forever.
         ticker.start(interval: 1) { [weak self] in
             self?.tick()
@@ -144,6 +153,7 @@ final class PomodoroEngine {
     /// prepared with its full length and waits for Start.
     private func advance(countFocus: Bool) {
         ticker.stop()
+        notifications.cancelPending()   // matters for Skip; harmless after a natural end
         endDate = nil
         isRunning = false
         isPaused = false
