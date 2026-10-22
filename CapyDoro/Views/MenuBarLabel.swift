@@ -12,17 +12,27 @@ struct MenuBarLabel: View {
     // redraw automatically whenever they change (every tick while running).
     let engine: PomodoroEngine
 
+    /// Loaded once and shared (`static`), not reloaded on every tick.
+    private static let capybara = ArtCatalog.menuBarIcon()
+
     var body: some View {
         HStack(spacing: 4) {
-            Image(systemName: iconName)
+            icon
             Text(TimeFormatter.string(fromSeconds: engine.displayRemaining))
                 .monospacedDigit()   // every digit gets the same width, so the item never jiggles
         }
     }
 
-    /// SF Symbol for the current state (the capybara art replaces these later).
-    private var iconName: String {
-        if engine.isPaused { return "pause.circle" }
-        return engine.phase.isBreak ? "cup.and.saucer" : "timer"
+    /// The capybara normally; SF Symbols for paused and breaks until the B4 poses exist.
+    /// `@ViewBuilder` lets one property return different kinds of views from an `if`.
+    @ViewBuilder
+    private var icon: some View {
+        if engine.isPaused {
+            Image(systemName: "pause.circle")
+        } else if engine.phase.isBreak {
+            Image(systemName: "cup.and.saucer")
+        } else {
+            Image(nsImage: Self.capybara)
+        }
     }
 }
