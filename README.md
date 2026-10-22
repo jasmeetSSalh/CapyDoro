@@ -55,8 +55,7 @@ xcodebuild -scheme CapyDoro -destination 'platform=macOS' test
 ```
 
 The app uses Apple frameworks only (SwiftUI, Observation, UserNotifications, ServiceManagement);
-there are no third-party dependencies. `CLAUDE.md` describes the architecture, the timer's rules
-and the design decisions in detail.
+there are no third-party dependencies.
 
 The sprites and icons are generated from the drawings in `Art/` by `Art/tools/make_sprites.py`
 and `Art/tools/make_icon.py` (Python 3 with Pillow). Rerun them after changing any drawing.

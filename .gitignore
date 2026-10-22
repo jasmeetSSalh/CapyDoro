@@ -4,3 +4,6 @@ DerivedData/
 build/
 *.xcresult
 dist/
+
+# Local-only project brief for Claude Code (kept out of the public repo)
+CLAUDE.md
