@@ -9,6 +9,8 @@
 //  sessionsBeforeLongBreak). Finishing or skipping a long break resets the count.
 //  A skipped focus is not counted.
 //
+//  Every change is saved, so quitting or crashing mid-session loses nothing.
+//
 
 import Foundation
 import Observation
@@ -85,6 +87,7 @@ final class PomodoroEngine {
         isPaused = true
         ticker.stop()
         notifications.cancelPending()   // no "ghost" alert for a paused session
+        save()
     }
 
     func resume() {
@@ -102,6 +105,7 @@ final class PomodoroEngine {
         completedFocusCount = 0
         ticker.stop()
         notifications.cancelPending()
+        save()
     }
 
     /// Ends the current phase now, without counting a skipped focus.
@@ -110,18 +114,40 @@ final class PomodoroEngine {
         advance(countFocus: false)
     }
 
-    func restoreSavedState() {}   // M6
+    /// Called once at launch. Picks up the timer from the last save:
+    /// - still running → keeps counting to the same end time
+    /// - ended while the app was closed → moves on one phase and waits for Start
+    ///   (no chime: macOS already showed the alert at the right time)
+    /// - paused or waiting → restored as it was
+    func restoreSavedState() {
+        let saved = settings.savedTimer
+        phase = saved.phase
+        completedFocusCount = saved.completedFocusCount
+        guard phase != .idle else { return }
+
+        if let end = saved.endDate {
+            if end > now() {
+                startCountdown(until: end)
+            } else {
+                advance(countFocus: true, allowAutoStart: false)
+            }
+        } else if let paused = saved.pausedRemainingSeconds {
+            remainingSeconds = paused
+            isPaused = true
+        } else {
+            remainingSeconds = settings.duration(for: phase)
+        }
+    }
 
     #if DEBUG
     /// Testing aid (debug builds only): makes the running phase end in a few seconds.
     func debugJumpToEnd(secondsLeft: Int = 5) {
         guard isRunning else { return }
-        endDate = now().addingTimeInterval(TimeInterval(secondsLeft))
-        notifications.scheduleEndOfPhase(phase, at: now().addingTimeInterval(TimeInterval(secondsLeft)))
+        startCountdown(until: now().addingTimeInterval(TimeInterval(secondsLeft)))
     }
     #endif
 
-    /// Called every second while running (and on wake from sleep later).
+    /// Called every second while running, and right after the Mac wakes from sleep.
     func tick() {
         guard isRunning, let endDate else { return }
         tickVersion += 1
@@ -137,7 +163,10 @@ final class PomodoroEngine {
 
     /// Starts counting down `remainingSeconds` from now.
     private func run() {
-        let end = now().addingTimeInterval(TimeInterval(remainingSeconds))
+        startCountdown(until: now().addingTimeInterval(TimeInterval(remainingSeconds)))
+    }
+
+    private func startCountdown(until end: Date) {
         endDate = end
         isRunning = true
         // Scheduled with macOS up front, so the alert appears on time even if this app
@@ -147,11 +176,12 @@ final class PomodoroEngine {
         ticker.start(interval: 1) { [weak self] in
             self?.tick()
         }
+        save()
     }
 
     /// Moves to the next phase. With autoStartNext off (the default), the next phase is
     /// prepared with its full length and waits for Start.
-    private func advance(countFocus: Bool) {
+    private func advance(countFocus: Bool, allowAutoStart: Bool = true) {
         ticker.stop()
         notifications.cancelPending()   // matters for Skip; harmless after a natural end
         endDate = nil
@@ -173,8 +203,19 @@ final class PomodoroEngine {
 
         // Read the length now, so a duration changed mid-phase applies from the next phase.
         remainingSeconds = settings.duration(for: phase)
-        if settings.autoStartNext {
+        if allowAutoStart && settings.autoStartNext {
             run()
+        } else {
+            save()
         }
+    }
+
+    private func save() {
+        settings.savedTimer = SettingsStore.SavedTimer(
+            phase: phase,
+            endDate: endDate,
+            pausedRemainingSeconds: isPaused ? remainingSeconds : nil,
+            completedFocusCount: completedFocusCount
+        )
     }
 }

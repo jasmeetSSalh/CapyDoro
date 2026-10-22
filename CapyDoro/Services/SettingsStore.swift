@@ -72,6 +72,34 @@ final class SettingsStore {
         }
     }
 
+    // MARK: - Saved timer state
+
+    /// Where the timer was at its last change, so a relaunch can pick up where it left off.
+    /// Not a user setting, but it lives in the same UserDefaults.
+    struct SavedTimer {
+        var phase: Phase
+        var endDate: Date?                 // only while running
+        var pausedRemainingSeconds: Int?   // only while paused
+        var completedFocusCount: Int
+    }
+
+    var savedTimer: SavedTimer {
+        get {
+            SavedTimer(
+                phase: Phase(rawValue: defaults.string(forKey: "currentPhase") ?? "") ?? .idle,
+                endDate: defaults.object(forKey: "currentEndDate") as? Date,
+                pausedRemainingSeconds: defaults.object(forKey: "pausedRemainingSeconds") as? Int,
+                completedFocusCount: defaults.integer(forKey: "completedFocusCount")
+            )
+        }
+        set {
+            defaults.set(newValue.phase.rawValue, forKey: "currentPhase")
+            defaults.set(newValue.endDate, forKey: "currentEndDate")   // nil removes the key
+            defaults.set(newValue.pausedRemainingSeconds, forKey: "pausedRemainingSeconds")
+            defaults.set(newValue.completedFocusCount, forKey: "completedFocusCount")
+        }
+    }
+
     // MARK: - Private
 
     private func int(_ key: String, default fallback: Int, in range: ClosedRange<Int>) -> Int {

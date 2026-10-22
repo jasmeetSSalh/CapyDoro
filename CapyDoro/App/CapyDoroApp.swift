@@ -14,16 +14,20 @@ struct CapyDoroApp: App {
     @State private var settings: SettingsStore
     @State private var engine: PomodoroEngine
     private let launchAtLogin = LaunchAtLoginService()
+    private let wakeObserver: WakeObserver
 
     init() {
         let settings = SettingsStore()
-        _settings = State(initialValue: settings)
-        _engine = State(initialValue: PomodoroEngine(
+        let engine = PomodoroEngine(
             settings: settings,
             notifications: NotificationService(),
             sound: SoundService(),
             ticker: RepeatingTicker()
-        ))
+        )
+        engine.restoreSavedState()   // continue a session from before quitting
+        wakeObserver = WakeObserver { engine.tick() }
+        _settings = State(initialValue: settings)
+        _engine = State(initialValue: engine)
     }
 
     var body: some Scene {
